@@ -1,0 +1,96 @@
+#menu {
+  border: 2px solid red;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%; /* parent - body */
+}
+#title {
+  font-size: 3em;
+}
+#menu > .content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  row-gap: 2em;
+}
+#menu .content .buttons {
+  display: flex;
+  flex-direction: column;
+  row-gap: 1.2em;
+  margin-top: 4em;
+}
+#menu .content .buttons button {
+  width: 260px;
+  padding: 12px 24px;
+  font-size: 1em;
+  border: 2px solid white;
+  border-radius: 50px;
+  background-color: transparent;
+  color: white;
+  transition: all 0.15s ease;
+}
+#menu .content .buttons button:hover {
+  background-color: white;
+  color: black;
+}
+
+/* ----- Aside Inventory ----- */
+#inventory {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: grey;
+  border: 2px solid blue;
+  width: 500px;
+  height: 100%; /* parent - #menu */
+  transform: translateX(calc(-100% + 70px));
+  transition: all 0.35s ease;
+}
+#inventory:hover {
+  transform: translateX(0);
+}
+#inventory .header {
+  text-align: center;
+  padding: 1.5em 0 2em 0;
+  font-size: 1.4em;
+}
+#inventory > .content {
+  width: calc(100% - 70px);
+  height: 100%; /* parent - #inventory */
+  font-size: 1.1em;
+  border: 1px solid rgb(102, 202, 102);
+  position: relative;
+}
+#inventory > .content > *:not(:first-child) {
+  margin-bottom: 3em;
+}
+#inventory .inventory-ships .gallery img:not(:first-of-type),
+#inventory .inventory-backgrounds .gallery img:not(:first-of-type) {
+  display: none;
+}
+#inventory .inventory-ships,
+#inventory .inventory-backgrounds {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 0.5em;
+}
+#inventory .inventory-ships .gallery,
+#inventory .inventory-backgrounds .gallery {
+  display: flex;
+  align-items: center;
+  column-gap: 0.5em;
+}
+
+#inventory button {
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  padding: 4px 12px;
+}
+#inventory .stats {
+  padding-left: 1.5em;
+  font-size: 1.15em;
+}

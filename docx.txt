@@ -1,0 +1,9 @@
+TODO List x Rules
+
+1. La fiecare coliziune se scade 1 viata, 3 power-ups, 5 coins, nu se scad rachetele culese.
+2. Cat timp jucatorul este in viata, rachetele raman in storage pana la finalul rundei.
+
+
+Probleme:
+!!! Nu opreste corect intervalul de spinCoin; dupa iesirea din viewport
+si dupa coliziune (rezolvat)

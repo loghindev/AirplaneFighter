@@ -1,0 +1,34 @@
+#endMenu {
+  height: 100%; /* parent - body */
+  border: 2px solid green;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2em;
+}
+#endMenu .header {
+  text-align: center;
+  font-size: 1.3em;
+}
+#endMenu .stats,
+#endMenu .buttons {
+  margin-top: 2em;
+}
+#endMenu > .content {
+  padding: 3em 6em;
+  border: 2px solid purple;
+}
+#endMenu .buttons button {
+  display: block;
+  width: 250px;
+  padding: 0.5em 0;
+  margin-top: 1em;
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  transition: all 0.12s ease;
+}
+#endMenu .buttons button:hover {
+  background-color: #cecece;
+  color: black;
+}
