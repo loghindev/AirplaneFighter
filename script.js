@@ -28,16 +28,22 @@ const hudCoins = document.querySelector("#hud .coins .amount");
 let generateAsteroidId = null;
 let generatePowerUpGiftId = null;
 let generateRocketGiftId = null;
+let reloadInterval = null;
 
 // options
 const bulletSpeed = 5;
 const giftSpeed = 0.8;
 let runningEffect = false;
 let lockMovement = false;
+let expired = false;
+// game
 let gameOver = false;
 
 document.addEventListener("DOMContentLoaded", () => {
-  handleMainMenuContext();
+  // handleMainMenuContext();
+  //? Temporary - nu mai verific coliziuni momentan
+  gameOver = false; //? temp
+  loadGame(); //? temp
   handleEndMenuContext();
 });
 function loadGame() {
@@ -45,7 +51,7 @@ function loadGame() {
   setAirplaneModel();
   setAirplaneBehavior();
   //! setTimeout()
-  generateAsteroids();
+  // generateAsteroids();
   // generatePowerUpGifts();
   // generateRocketGifts();
 }
@@ -79,9 +85,10 @@ function setAirplaneShooting() {
   });
 }
 function shoot(x, y) {
-  if (lockMovement || gameOver) return; // dont create and move new bullet
+  if (lockMovement || expired || gameOver) return; // dont create and move new bullet
   const bullet = createBullet();
   moveBullet(bullet, x, y);
+  useEnergy();
 }
 
 //? Generate Asteroids
@@ -207,7 +214,7 @@ function moveGift(ability, x, y) {
   } else {
     cancelAnimationFrame(giftId);
     ability.remove();
-    console.log("moveGift() oprit");
+    // console.log("moveGift() oprit");
   }
 }
 
@@ -217,6 +224,7 @@ function checkCollision(obj1, obj2) {
   let a = obj1.getBoundingClientRect();
   let b = obj2.getBoundingClientRect();
   if (a.top < b.bottom && a.bottom > b.top && a.right > b.left && a.left < b.right) {
+    // found collision
     if (obj1.id === "airplane" && obj2.classList.contains("asteroid")) {
       obj2.remove();
       destroyAirplane();
@@ -258,6 +266,12 @@ function incrementPower() {
   hudPowerUp.textContent = (++amount).toString();
 }
 
+// coins
+function incrementCoins() {
+  let amount = Number(hudCoins.textContent);
+  hudCoins.textContent = (++amount).toString();
+}
+
 //* DECREASE STATS
 function decreaseHeart() {
   let amount = Number(hudHearts.textContent);
@@ -280,12 +294,6 @@ function decreaseCoins() {
     amount -= 5;
   }
   hudCoins.textContent = amount.toString();
-}
-
-// coins
-function incrementCoins() {
-  let amount = Number(hudCoins.textContent);
-  hudCoins.textContent = (++amount).toString();
 }
 
 //* --- DESTROY ---
@@ -330,8 +338,6 @@ function spinCoin(coin) {
       index = 0;
       coin.src = coinSpin[index++];
     }
-    // console.log(coin.getBoundingClientRect().top);
-
     if (coin.getBoundingClientRect().y === 0) {
       clearInterval(spinCoinId);
       console.log("spinCoinId() Stopped");
@@ -397,6 +403,51 @@ function clearScreen() {
   if (powersLeft.length) powersLeft.forEach((powerup) => powerup.remove());
   if (rocketsLeft.length) rocketsLeft.forEach((rocket) => rocket.remove());
   if (coinsLeft.length) coinsLeft.forEach((coin) => coin.remove());
+}
+//! ENERGY BAR
+function useEnergy() {
+  console.log("i'm using energy");
+  const bars = document.querySelectorAll("#energyPanel .energyBars .fill-percent");
+  let newTranslateX;
+  bars.forEach((bar) => {
+    const style = getComputedStyle(bar);
+    const translateX = parseFloat(style.transform.split(", ")[4]);
+    newTranslateX = translateX + 25;
+    bar.style.transform = `translateX(${newTranslateX}px)`;
+  });
+  // translateX(-20%) ex
+  if (newTranslateX <= -15) {
+    reloadEnergy();
+  } else {
+    expireEnergy();
+  }
+}
+function expireEnergy() {
+  expired = true;
+  setTimeout(() => {
+    reloadEnergy();
+    expired = false;
+  }, 3850);
+}
+function reloadEnergy() {
+  if (reloadInterval !== null) clearInterval(reloadInterval);
+  reloadInterval = setInterval(() => {
+    console.log("reload energy...");
+
+    const bars = document.querySelectorAll("#energyPanel .energyBars .fill-percent");
+    bars.forEach((bar, index) => {
+      const style = getComputedStyle(bar);
+      const translateX = Number(style.transform.split(", ")[4]);
+      let newTranslateX = translateX - (!expired ? 1.1 : 1.75);
+      if (newTranslateX >= -bar.getBoundingClientRect().width - 2) {
+        bar.style.transform = `translateX(${newTranslateX}px)`;
+      } else {
+        clearInterval(reloadInterval);
+        reloadInterval = null;
+        console.log("reloadInterval() oprit");
+      }
+    });
+  }, 20);
 }
 
 //* --- FRAMES PATHS ---

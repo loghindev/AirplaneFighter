@@ -12,7 +12,7 @@
   position: absolute;
 }
 
-/* --- HUD --- */
+/* --- HUD (bottom-left) --- */
 #hud {
   position: absolute;
   bottom: 0;
@@ -39,3 +39,76 @@
   align-items: flex-end;
   font-size: 1.1em;
 }
+
+/* --- Energy Panel (top-left) --- */
+#energyPanel {
+  overflow: hidden;
+  background-color: var(--hud-background);
+  backdrop-filter: blur(2px);
+  width: 370px;
+  border-style: solid;
+  border-color: var(--hud-border);
+  border-width: 0 5px 5px 0;
+  border-radius: 0 0 3em 0;
+  box-shadow: 1px 1px 15px var(--hud-shadow);
+}
+#energyPanel > .content {
+  display: flex;
+  align-items: center;
+}
+#energyPanel .score {
+  font-size: 1.5em;
+  padding-left: 8px;
+  padding-right: 3px;
+  letter-spacing: 5px;
+}
+#energyPanel .energyBars {
+  list-style: none;
+}
+#energyPanel .energyBars li {
+  overflow: hidden;
+  width: 320px;
+  height: 7px;
+  border-style: solid;
+  border-color: var(--hud-shadow);
+  border-width: 1px 1px 1px 0;
+}
+
+/* --- Fill energy bars --- */
+
+#energyPanel .energyBars .bar:nth-child(1) .fill-percent {
+  height: 100%;
+  width: 100%;
+  background-image: linear-gradient(to right, lightblue, orange, red);
+  will-change: transform;
+}
+#energyPanel .energyBars .bar:nth-child(2) .fill-percent {
+  height: 100%;
+  width: 100%;
+  background-image: linear-gradient(to right, lightblue, orange, red);
+  will-change: transform;
+}
+#energyPanel .energyBars .bar:nth-child(3) .fill-percent {
+  height: 100%;
+  width: 100%;
+  background-image: linear-gradient(to right, lightblue, orange, red);
+  will-change: transform;
+}
+#energyPanel .energyBars .bar:nth-child(4) .fill-percent {
+  height: 100%;
+  width: 100%;
+  background-image: linear-gradient(to right, lightblue, orange, red);
+  will-change: transform;
+}
+#energyPanel .energyBars .bar:nth-child(5) .fill-percent {
+  height: 100%;
+  width: 100%;
+  background-image: linear-gradient(to right, lightblue, orange, red);
+  will-change: transform;
+}
+
+#energyPanel .energyBars .fill-percent {
+  transform: translateX(-100%);
+  opacity: 80%;
+}
+/* --- Utility Classes --- */
