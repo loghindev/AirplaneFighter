@@ -4,6 +4,3 @@ TODO List x Rules
 2. Cat timp jucatorul este in viata, rachetele raman in storage pana la finalul rundei.
 
 
-Probleme:
-!!! Nu opreste corect intervalul de spinCoin; dupa iesirea din viewport
-si dupa coliziune (rezolvat)

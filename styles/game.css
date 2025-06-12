@@ -10,6 +10,12 @@
 #garbageCollector .rockets > *,
 #garbageCollector .coins > * {
   position: absolute;
+  will-change: transform;
+}
+
+#game #airplane {
+  transform: translate(-10000px, -10000px);
+  z-index: 99;
 }
 
 /* --- HUD (bottom-left) --- */
@@ -60,7 +66,7 @@
   font-size: 1.5em;
   padding-left: 8px;
   padding-right: 3px;
-  letter-spacing: 5px;
+  letter-spacing: 1px;
 }
 #energyPanel .energyBars {
   list-style: none;
@@ -111,4 +117,63 @@
   transform: translateX(-100%);
   opacity: 80%;
 }
+
+/* ----- Pause Context Menu ----- */
+#pauseMenu {
+  border: 2px solid white;
+  width: max-content;
+  padding: 1em 3em;
+  font-size: 1.2em;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+#pauseMenu .header {
+  text-align: center;
+  font-size: 1.3em;
+  margin-bottom: 3em;
+}
+#pauseMenu .buttons button {
+  display: block;
+  width: 200px;
+  margin-top: 1em;
+  padding: 0.5em 0;
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  transition: all 0.12s ease;
+}
+#pauseMenu .buttons button:hover {
+  background-color: white;
+  color: black;
+}
+
 /* --- Utility Classes --- */
+.glow {
+  animation: glow 3s ease infinite;
+}
+
+@keyframes glow {
+  0% {
+    filter: drop-shadow(0 0 4px red);
+  }
+  14.29% {
+    filter: drop-shadow(0 0 4px orange);
+  }
+  28.57% {
+    filter: drop-shadow(0 0 4px yellow);
+  }
+  42.86% {
+    filter: drop-shadow(0 0 4px green);
+  }
+  57.14% {
+    filter: drop-shadow(0 0 4px blue);
+  }
+  71.43% {
+    filter: drop-shadow(0 0 4px indigo);
+  }
+  85.71% {
+    filter: drop-shadow(0 0 4px rgb(114, 58, 114));
+  }
+}

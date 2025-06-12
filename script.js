@@ -4,12 +4,15 @@ const mainMenu = document.getElementById("menu");
 const storeSection = document.getElementById("store");
 const gameSection = document.getElementById("game");
 const endMenu = document.getElementById("endMenu");
+const pauseMenu = document.getElementById("pauseMenu");
 //* Sections Buttons
 const playBtn = document.getElementById("playBtn");
 const storeBtn = document.getElementById("storeBtn");
 const backToMenuBtn = document.getElementById("backToMenu");
 const endMenuBtn = document.getElementById("endMenuBtn");
 const endRestartBtn = document.getElementById("endRestartBtn");
+const pauseMenuBtn = document.getElementById("pauseMenuBtn");
+const pauseContinueBtn = document.getElementById("pauseContinueBtn");
 
 const menuAirplane = document.getElementById("menuAirplane");
 const airplane = document.getElementById("airplane");
@@ -24,42 +27,49 @@ const hudHearts = document.querySelector("#hud .hearts .amount");
 const hudRockets = document.querySelector("#hud .rockets .amount");
 const hudPowerUp = document.querySelector("#hud .power-lvl .amount");
 const hudCoins = document.querySelector("#hud .coins .amount");
-// ids
+const hudScore = document.querySelector("#energyPanel .score");
+//* ids
 let generateAsteroidId = null;
 let generatePowerUpGiftId = null;
 let generateRocketGiftId = null;
 let reloadInterval = null;
-
-// options
+let scoreId = null;
+//* options
 const bulletSpeed = 5;
+const rocketSpeed = 2.5;
 const giftSpeed = 0.8;
+let indexScore = 0;
 let runningEffect = false;
 let lockMovement = false;
 let expired = false;
-// game
+let once = true;
 let gameOver = false;
+let paused = false; //! DE CONTINUAT
 
 document.addEventListener("DOMContentLoaded", () => {
-  // handleMainMenuContext();
-  //? Temporary - nu mai verific coliziuni momentan
-  gameOver = false; //? temp
-  loadGame(); //? temp
+  handleMainMenuContext();
   handleEndMenuContext();
 });
 function loadGame() {
   setHud();
   setAirplaneModel();
-  setAirplaneBehavior();
-  //! setTimeout()
-  // generateAsteroids();
-  // generatePowerUpGifts();
-  // generateRocketGifts();
+  if (once) {
+    setAirplaneBehavior();
+    once = false;
+  }
+  setTimeout(() => {
+    generateAsteroids();
+    generatePowerUpGifts();
+    generateRocketGifts();
+  }, 2000);
+  handleScore();
 }
 function setHud() {
   hudHearts.textContent = "3";
   hudRockets.textContent = "0";
   hudPowerUp.textContent = "0";
   hudCoins.textContent = "0";
+  hudScore.textContent = "00000";
 }
 
 //? AIRPLANE
@@ -74,21 +84,38 @@ function setAirplaneBehavior() {
 function setAirplaneMovement() {
   document.addEventListener("mousemove", (event) => {
     if (lockMovement || gameOver) return; // lock the movement while exploding effect
-    let x = event.clientX;
-    let y = event.clientY;
+    const x = event.clientX;
+    const y = event.clientY;
     airplane.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
   });
 }
 function setAirplaneShooting() {
   document.addEventListener("click", (event) => {
-    shoot(event.clientX, event.clientY);
+    if (event.target.id !== "endRestartBtn") {
+      shoot(event.clientX, event.clientY);
+    }
+  });
+  document.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    console.log(Number(hudRockets.textContent));
+
+    if (Number(hudRockets.textContent) > 0) {
+      shootRocket(event.clientX, event.clientY);
+    } else {
+      console.warn("NO BULLETS");
+    }
   });
 }
 function shoot(x, y) {
-  if (lockMovement || expired || gameOver) return; // dont create and move new bullet
+  if (lockMovement || expired || gameOver) return;
   const bullet = createBullet();
   moveBullet(bullet, x, y);
   useEnergy();
+}
+function shootRocket(x, y) {
+  const rocket = createRocket();
+  moveBullet(rocket, x, y);
+  decreaseRocket();
 }
 
 //? Generate Asteroids
@@ -104,7 +131,7 @@ function generateAsteroids() {
 
 //? Generate PowerUp Gifts
 function generatePowerUpGifts() {
-  const delay = Math.floor(Math.random() * 3000) + 3000;
+  const delay = Math.floor(Math.random() * 30000) + 30000;
   const powerUp = createPowerUpGift();
   const randomX = Math.random() * innerWidth;
   const y = -20;
@@ -114,7 +141,7 @@ function generatePowerUpGifts() {
 
 //? Generate Rocket Gifts
 function generateRocketGifts() {
-  const delay = Math.floor(Math.random() * 5000) + 5000;
+  const delay = Math.floor(Math.random() * 125000) + 30000;
   const rocketGift = createRocketGift();
   const randomX = Math.random() * innerWidth;
   const y = -20;
@@ -122,7 +149,7 @@ function generateRocketGifts() {
   generateRocketGiftId = setTimeout(generateRocketGifts, delay);
 }
 
-//TODO Generate Coin Gifts
+//? Generate Coin Gifts
 function generateCoinGifts(asteroidPointer) {
   const coinGift = createCoinGift();
   const rect = asteroidPointer.getBoundingClientRect();
@@ -134,7 +161,7 @@ function generateCoinGifts(asteroidPointer) {
 function createBullet() {
   const bullet = document.createElement("img");
   bullet.classList = "bullet";
-  bullet.src = "https://placehold.co/1x8?text=B";
+  bullet.src = "./assets/projectiles/red/slim.png";
   bulletsCollector.appendChild(bullet);
   return bullet;
 }
@@ -148,9 +175,8 @@ function createAsteroid() {
 }
 function createPowerUpGift() {
   const powerUp = document.createElement("img");
-  powerUp.src = "https://placehold.co/20x20?text=P";
-  powerUp.classList = "power-gift";
-  powerUp.style.borderRadius = "50%";
+  powerUp.src = "./assets/powerup.png";
+  powerUp.classList.add("power-gift", "glow");
   powerUpsCollector.appendChild(powerUp);
   return powerUp;
 }
@@ -163,19 +189,41 @@ function createRocketGift() {
 }
 function createCoinGift() {
   const coinGift = document.createElement("img");
-  coinGift.src = "https://placehold.co/35x35?text=C";
-  coinGift.classList = "coin-gift";
-  coinGift.style.borderRadius = "20px";
+  coinGift.classList.add("coin-gift");
   coinsCollector.appendChild(coinGift);
   return coinGift;
+}
+function createRocket() {
+  const rocket = document.createElement("img");
+  rocket.classList = "rocket";
+  rocket.src = "https://placehold.co/5x70?text=X";
+  rocketsCollector.appendChild(rocket);
+  return rocket;
 }
 
 //* --- MOVEMENT ---
 function moveBullet(bullet, x, y) {
   let bulletId = null;
-  y -= bulletSpeed; // 2
+  if (bullet.classList.contains("rocket")) {
+    y -= rocketSpeed; // 2
+  } else {
+    y -= bulletSpeed; // 5
+  }
   bullet.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
   handleBulletsCollision(bullet);
+  if (bullet.classList.contains("rocket")) {
+    if (y > 150) {
+      bulletId = requestAnimationFrame(() => {
+        moveBullet(bullet, x, y);
+      });
+    } else {
+      cancelAnimationFrame(bulletId);
+      clearScreen(bullet);
+      console.log("bulletId() oprit");
+    }
+    return;
+  }
+
   if (y > 100) {
     bulletId = requestAnimationFrame(() => {
       moveBullet(bullet, x, y);
@@ -198,7 +246,7 @@ function moveAsteroid(asteroid, x, y, speedY) {
   } else {
     cancelAnimationFrame(moveAsteroidId);
     asteroid.remove();
-    // console.log("moveAsteroid() oprit");
+    console.log("moveAsteroid() oprit");
   }
 }
 function moveGift(ability, x, y) {
@@ -230,11 +278,14 @@ function checkCollision(obj1, obj2) {
       destroyAirplane();
       decreasePower();
       decreaseHeart();
-      decreaseCoins();
+      indexScore -= 1000;
+
+      updateScoreValue();
     } else if (obj1.classList.contains("bullet") && obj2.classList.contains("asteroid")) {
       [1, 2, 3, 4][Math.floor(Math.random() * 3)] === 1 ? generateCoinGifts(obj2) : "";
       obj1.remove();
-      obj2.remove();
+      explodeAsteroid(obj2);
+      incrementScore();
     } else if (obj1.id === "airplane" && obj2.classList.contains("power-gift")) {
       obj2.remove();
       incrementPower();
@@ -244,7 +295,6 @@ function checkCollision(obj1, obj2) {
       // console.log("airplane x rocket");
     } else if (obj1.id === "airplane" && obj2.classList.contains("coin-gift")) {
       obj2.remove();
-
       incrementCoins();
       // console.log("airplane x coin");
     }
@@ -256,7 +306,6 @@ function handleBulletsCollision(bullet) {
 }
 
 //* INCREASE STATISTICS
-
 function incrementRocketStorage() {
   let amount = Number(hudRockets.textContent);
   hudRockets.textContent = (++amount).toString();
@@ -265,17 +314,21 @@ function incrementPower() {
   let amount = Number(hudPowerUp.textContent);
   hudPowerUp.textContent = (++amount).toString();
 }
-
-// coins
 function incrementCoins() {
   let amount = Number(hudCoins.textContent);
   hudCoins.textContent = (++amount).toString();
+}
+function incrementScore() {
+  indexScore += 50;
+  updateScoreValue();
 }
 
 //* DECREASE STATS
 function decreaseHeart() {
   let amount = Number(hudHearts.textContent);
-  hudHearts.textContent = (--amount).toString();
+  if (amount - 1 >= 0) {
+    hudHearts.textContent = (--amount).toString();
+  }
 }
 function decreasePower() {
   let amount = Number(hudPowerUp.textContent);
@@ -286,14 +339,9 @@ function decreasePower() {
   }
   hudPowerUp.textContent = amount.toString();
 }
-function decreaseCoins() {
-  let amount = Number(hudCoins.textContent);
-  if (amount <= 5) {
-    amount = 0;
-  } else {
-    amount -= 5;
-  }
-  hudCoins.textContent = amount.toString();
+function decreaseRocket() {
+  let amount = Number(hudRockets.textContent);
+  hudRockets.textContent = (--amount).toString();
 }
 
 //* --- DESTROY ---
@@ -317,7 +365,7 @@ function explodeAirplane() {
         //* reset flags
         runningEffect = false;
         lockMovement = false;
-        if (hudHearts.textContent === "0") {
+        if (Number(hudHearts.textContent) <= 0) {
           endGame();
           return;
         }
@@ -327,12 +375,11 @@ function explodeAirplane() {
     }
   }, 60);
 }
-
 function spinCoin(coin) {
   let index = 0;
   let spinCoinId = setInterval(() => {
     if (index < coinSpin.length) {
-      console.log("Spinning Coin...");
+      // console.log("Spinning Coin...");
       coin.src = coinSpin[index++];
     } else {
       index = 0;
@@ -340,7 +387,24 @@ function spinCoin(coin) {
     }
     if (coin.getBoundingClientRect().y === 0) {
       clearInterval(spinCoinId);
-      console.log("spinCoinId() Stopped");
+      // console.log("spinCoinId() Stopped");
+    }
+  }, 50);
+}
+function explodeAsteroid(asteroid) {
+  const rect = asteroid.getBoundingClientRect();
+  asteroid.remove();
+  let index = 0;
+  const img = document.createElement("img");
+  img.classList = "destroyed";
+  img.style.transform = `translate(${rect.x}px, ${rect.y + 20}px)`;
+  asteroidsCollector.appendChild(img);
+  let explodeAsteroidId = setInterval(() => {
+    if (index < asteroidExplosion.length) {
+      img.src = asteroidExplosion[index++];
+    } else {
+      clearInterval(explodeAsteroidId);
+      img.remove();
     }
   }, 50);
 }
@@ -351,9 +415,11 @@ function endGame() {
   clearTimeout(generateAsteroidId);
   clearTimeout(generatePowerUpGiftId);
   clearTimeout(generateRocketGiftId);
-
-  clearScreen();
+  clearInterval(reloadInterval);
   displayEndContextMenu();
+  clearScreen(null);
+  indexScore = 0;
+  document.body.style.cursor = "default";
 }
 
 //* --- HANDLE CONTEXT MENUS ACTIONS ---
@@ -362,22 +428,15 @@ function handleMainMenuContext() {
   playBtn.addEventListener("click", () => {
     mainMenu.classList.add("hidden-section");
     gameSection.classList.remove("hidden-section");
+    document.body.style.cursor = "none";
     gameOver = false;
-    loadGame();
-  });
-  // Go to Store Page
-  storeBtn.addEventListener("click", () => {
-    mainMenu.classList.add("hidden-section");
-    storeSection.classList.remove("hidden-section");
-    backToMenuBtn.addEventListener("click", () => {
-      mainMenu.classList.remove("hidden-section");
-      storeSection.classList.add("hidden-section");
-    });
+    setTimeout(loadGame, 2);
   });
 }
 function handleEndMenuContext() {
   // Go Gome from end menu context
   endMenuBtn.addEventListener("click", () => {
+    endGame();
     endMenu.classList.add("hidden-section");
     gameSection.classList.add("hidden-section");
     mainMenu.classList.remove("hidden-section");
@@ -394,57 +453,92 @@ function displayEndContextMenu() {
 }
 
 //* UTILITY FUNCTIONS
-function clearScreen() {
+function clearScreen(bullet) {
   const asteroidsLeft = asteroidsCollector.querySelectorAll("img");
   const powersLeft = powerUpsCollector.querySelectorAll("img");
   const rocketsLeft = rocketsCollector.querySelectorAll("img");
   const coinsLeft = coinsCollector.querySelectorAll("img");
-  if (asteroidsLeft.length) asteroidsLeft.forEach((asteroid) => asteroid.remove());
-  if (powersLeft.length) powersLeft.forEach((powerup) => powerup.remove());
-  if (rocketsLeft.length) rocketsLeft.forEach((rocket) => rocket.remove());
-  if (coinsLeft.length) coinsLeft.forEach((coin) => coin.remove());
+  if (bullet === null) {
+    if (asteroidsLeft.length) asteroidsLeft.forEach((asteroid) => asteroid.remove());
+    if (powersLeft.length) powersLeft.forEach((powerup) => powerup.remove());
+    if (rocketsLeft.length) rocketsLeft.forEach((rocket) => rocket.remove());
+    if (coinsLeft.length) coinsLeft.forEach((coin) => coin.remove());
+  } else if (bullet.classList.contains("rocket")) {
+    //? DON'T DESTROY ABILITIES
+    if (asteroidsLeft.length) asteroidsLeft.forEach((asteroid) => asteroid.remove());
+    if (rocketsLeft.length)
+      rocketsLeft.forEach((rocket) => {
+        if (rocket.classList.contains("rocket")) {
+          rocket.remove();
+        }
+      });
+  }
+}
+
+function handleScore() {
+  scoreId = setInterval(() => {
+    if (gameOver) clearInterval(scoreId);
+    console.log("updating Score");
+
+    updateScoreValue();
+  }, 600);
+}
+
+function updateScoreValue() {
+  if (indexScore < 0) {
+    indexScore = 0;
+    hudScore.textContent = `00000`;
+  } else if (indexScore < 10) {
+    hudScore.textContent = `0000${indexScore}`;
+  } else if (indexScore < 100) {
+    hudScore.textContent = `000${indexScore}`;
+  } else if (indexScore < 1000) {
+    hudScore.textContent = `00${indexScore}`;
+  } else if (indexScore < 10000) {
+    hudScore.textContent = `0${indexScore}`;
+  } else if (indexScore < 100000) {
+    hudScore.textContent = indexScore;
+  } else {
+    indexScore = 0;
+  }
+  indexScore++;
 }
 //! ENERGY BAR
 function useEnergy() {
-  console.log("i'm using energy");
   const bars = document.querySelectorAll("#energyPanel .energyBars .fill-percent");
-  let newTranslateX;
   bars.forEach((bar) => {
     const style = getComputedStyle(bar);
-    const translateX = parseFloat(style.transform.split(", ")[4]);
-    newTranslateX = translateX + 25;
+    let translateX = parseFloat(style.transform.split(", ")[4]);
+    let newTranslateX = translateX + 21;
     bar.style.transform = `translateX(${newTranslateX}px)`;
+    if (newTranslateX <= -15) {
+      reloadEnergy();
+    } else {
+      expireEnergy();
+    }
   });
-  // translateX(-20%) ex
-  if (newTranslateX <= -15) {
-    reloadEnergy();
-  } else {
-    expireEnergy();
-  }
 }
 function expireEnergy() {
   expired = true;
   setTimeout(() => {
     reloadEnergy();
     expired = false;
-  }, 3850);
+  }, 3500);
 }
 function reloadEnergy() {
   if (reloadInterval !== null) clearInterval(reloadInterval);
   reloadInterval = setInterval(() => {
-    console.log("reload energy...");
-
     const bars = document.querySelectorAll("#energyPanel .energyBars .fill-percent");
-    bars.forEach((bar, index) => {
+    bars.forEach((bar) => {
       const style = getComputedStyle(bar);
       const translateX = Number(style.transform.split(", ")[4]);
-      let newTranslateX = translateX - (!expired ? 1.1 : 1.75);
+      let newTranslateX = translateX - (!expired ? 1 : 2);
       if (newTranslateX >= -bar.getBoundingClientRect().width - 2) {
         bar.style.transform = `translateX(${newTranslateX}px)`;
       } else {
         clearInterval(reloadInterval);
         reloadInterval = null;
-        console.log("reloadInterval() oprit");
+        // console.log("reloadInterval() oprit");
       }
     });
   }, 20);
@@ -452,30 +546,30 @@ function reloadEnergy() {
 
 //* --- FRAMES PATHS ---
 const shipExplosion = [
-  "./assets/explosion/13/1.png",
-  "./assets/explosion/13/2.png",
-  "./assets/explosion/13/3.png",
-  "./assets/explosion/13/4.png",
-  "./assets/explosion/13/5.png",
-  "./assets/explosion/13/6.png",
-  "./assets/explosion/13/7.png",
-  "./assets/explosion/13/8.png",
-  "./assets/explosion/13/9.png",
-  "./assets/explosion/13/10.png",
-  "./assets/explosion/13/11.png",
-  "./assets/explosion/13/12.png",
-  "./assets/explosion/13/13.png",
-  "./assets/explosion/13/14.png",
-  "./assets/explosion/13/15.png",
-  "./assets/explosion/13/16.png",
-  "./assets/explosion/13/17.png",
-  "./assets/explosion/13/18.png",
-  "./assets/explosion/13/19.png",
-  "./assets/explosion/13/20.png",
-  "./assets/explosion/13/21.png",
-  "./assets/explosion/13/22.png",
-  "./assets/explosion/13/23.png",
-  "./assets/explosion/13/24.png",
+  "./assets/explosion/ship/1.png",
+  "./assets/explosion/ship/2.png",
+  "./assets/explosion/ship/3.png",
+  "./assets/explosion/ship/4.png",
+  "./assets/explosion/ship/5.png",
+  "./assets/explosion/ship/6.png",
+  "./assets/explosion/ship/7.png",
+  "./assets/explosion/ship/8.png",
+  "./assets/explosion/ship/9.png",
+  "./assets/explosion/ship/10.png",
+  "./assets/explosion/ship/11.png",
+  "./assets/explosion/ship/12.png",
+  "./assets/explosion/ship/13.png",
+  "./assets/explosion/ship/14.png",
+  "./assets/explosion/ship/15.png",
+  "./assets/explosion/ship/16.png",
+  "./assets/explosion/ship/17.png",
+  "./assets/explosion/ship/18.png",
+  "./assets/explosion/ship/19.png",
+  "./assets/explosion/ship/20.png",
+  "./assets/explosion/ship/21.png",
+  "./assets/explosion/ship/22.png",
+  "./assets/explosion/ship/23.png",
+  "./assets/explosion/ship/24.png",
 ];
 
 const coinSpin = [
@@ -510,4 +604,16 @@ const coinSpin = [
   "./assets/coin/spr_coin_28.png",
   "./assets/coin/spr_coin_29.png",
   "./assets/coin/spr_coin_30.png",
+];
+
+const asteroidExplosion = [
+  "./assets/explosion/asteroid/1.png",
+  "./assets/explosion/asteroid/2.png",
+  "./assets/explosion/asteroid/3.png",
+  "./assets/explosion/asteroid/4.png",
+  "./assets/explosion/asteroid/5.png",
+  "./assets/explosion/asteroid/6.png",
+  "./assets/explosion/asteroid/7.png",
+  "./assets/explosion/asteroid/8.png",
+  "./assets/explosion/asteroid/9.png",
 ];

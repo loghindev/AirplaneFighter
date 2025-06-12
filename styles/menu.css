@@ -41,8 +41,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  background-color: grey;
-  border: 2px solid blue;
+  background-color: hsla(225, 26%, 35%, 0.247);
   width: 500px;
   height: 100%; /* parent - #menu */
   transform: translateX(calc(-100% + 70px));
@@ -93,4 +92,10 @@
 #inventory .stats {
   padding-left: 1.5em;
   font-size: 1.15em;
+}
+#inventory .coins {
+  padding-left: 1.5em;
+  display: flex;
+  align-items: center;
+  column-gap: 2px;
 }
