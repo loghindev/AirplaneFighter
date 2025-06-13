@@ -16,7 +16,16 @@
   transform: translate(-10000px, -10000px);
   z-index: 2;
 }
-
+.rocket-wrapper .rocket {
+  position: relative;
+  z-index: 1;
+}
+.rocket-wrapper .rocket-flame {
+  position: absolute;
+  bottom: -40%;
+  left: 44%;
+  transform: scale(3);
+}
 /* --- HUD (bottom-left) --- */
 #hud {
   position: absolute;
@@ -150,7 +159,10 @@
 
 /* --- Utility Classes --- */
 .glow {
-  animation: glow 3s ease infinite;
+  animation: glow 3s linear infinite;
+}
+.rotate {
+  animation: rotate 5s linear infinite;
 }
 
 @keyframes glow {

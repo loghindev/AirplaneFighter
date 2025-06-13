@@ -1,4 +1,10 @@
 //* ----- GAME FUNCTIONALITY ------
+import {
+  launchRocketEffect,
+  rocketExplosionEffect,
+  energyWarningEffect,
+  energyExpireEffect,
+} from "./scripts.js/sounds.js";
 //* Sections
 const mainMenu = document.getElementById("menu");
 const gameSection = document.getElementById("game");
@@ -34,11 +40,12 @@ let reloadInterval = null;
 let scoreId = null;
 //* options
 const bulletSpeed = 5;
-const rocketSpeed = 2.5;
+const rocketSpeed = 2; // 2.5
 const giftSpeed = 0.8;
 let indexScore = 0;
 let runningEffect = false;
 let lockMovement = false;
+let warningBar = false;
 let expired = false;
 let once = true;
 let gameOver = false;
@@ -69,7 +76,7 @@ function loadGame() {
 }
 function setHud() {
   hudHearts.textContent = "3";
-  hudRockets.textContent = "0";
+  hudRockets.textContent = "100";
   hudPowerUp.textContent = "0";
   hudCoins.textContent = "0";
   hudScore.textContent = "00000";
@@ -104,6 +111,7 @@ function setAirplaneShooting() {
     event.preventDefault();
     if (Number(hudRockets.textContent) > 0 && !paused && !lockMovement && !gameOver) {
       shootRocket(event.clientX, event.clientY);
+      launchRocketEffect().play();
     } else {
       console.warn("NO BULLETS");
       // run error sound
@@ -118,6 +126,7 @@ function shoot(x, y) {
 }
 function shootRocket(x, y) {
   const rocket = createRocket();
+  rocketsCollector.appendChild(rocket);
   moveBullet(rocket, x, y);
   decreaseRocket();
 }
@@ -173,9 +182,8 @@ function createBullet() {
 function createAsteroid() {
   const asteroid = document.createElement("img");
   asteroid.classList = "asteroid";
-  //TODO Random Asteroid image (fix aici)
   asteroid.src = asteroidsGallery[Math.floor(Math.random() * asteroidsGallery.length)];
-  asteroid.style.transform = "translate(-50%, -50%)";
+  asteroid.style.transform = `translate(-50%, -50%)`;
   asteroid.style.borderRadius = "50px";
   asteroidsCollector.appendChild(asteroid);
   return asteroid;
@@ -183,13 +191,13 @@ function createAsteroid() {
 function createPowerUpGift() {
   const powerUp = document.createElement("img");
   powerUp.src = "./assets/powerup.png";
-  powerUp.classList.add("power-gift", "glow");
+  powerUp.classList.add("power-gift");
   powerUpsCollector.appendChild(powerUp);
   return powerUp;
 }
 function createRocketGift() {
   const rocketGift = document.createElement("img");
-  rocketGift.src = "https://placehold.co/16x16?text=R";
+  rocketGift.src = "./assets/rocket/rocket-gift.png";
   rocketGift.classList = "rocket-gift";
   rocketsCollector.appendChild(rocketGift);
   return rocketGift;
@@ -202,17 +210,23 @@ function createCoinGift() {
   return coinGift;
 }
 function createRocket() {
-  const rocket = document.createElement("img");
-  rocket.classList = "rocket";
-  rocket.src = "https://placehold.co/5x70?text=X";
-  rocketsCollector.appendChild(rocket);
-  return rocket;
+  const rocketWrapper = document.createElement("div");
+  const rocketBoom = document.createElement("img");
+  const rocketFlame = document.createElement("img");
+  rocketWrapper.classList = "rocket-wrapper";
+  rocketBoom.classList = "rocket";
+  rocketBoom.src = "./assets/rocket/rocket.png";
+  rocketFlame.classList = "rocket-flame";
+  // ceva
+  rocketWrapper.append(rocketBoom, rocketFlame);
+  animateRocketFlames(rocketFlame);
+  return rocketWrapper;
 }
 
 //* --- MOVEMENT ---
 function moveBullet(bullet, x, y) {
   let bulletId = null;
-  if (bullet.classList.contains("rocket")) {
+  if (bullet.classList.contains("rocket-wrapper")) {
     y -= rocketSpeed; // 2
   } else {
     y -= bulletSpeed; // 5
@@ -220,14 +234,20 @@ function moveBullet(bullet, x, y) {
   bullet.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
   handleBulletsCollision(bullet);
   //* Handle rocket movement and stop position
-  if (bullet.classList.contains("rocket")) {
-    if (y > -150) {
+
+  if (bullet.classList.contains("rocket-wrapper")) {
+    if (y > 200) {
       bulletId = requestAnimationFrame(() => {
         moveBullet(bullet, x, y);
       });
     } else {
       cancelAnimationFrame(bulletId);
       clearScreen(bullet);
+      explodeRocket(bullet);
+      launchRocketEffect().pause();
+      rocketExplosionEffect().play();
+      bullet.remove();
+
       console.log("bulletId() oprit");
     }
     return;
@@ -288,7 +308,7 @@ function checkCollision(obj1, obj2) {
       destroyAirplane();
       decreasePower();
       decreaseHeart();
-      indexScore -= 250;
+      indexScore -= 250; // lose score
       updateScoreValue();
     } else if (obj1.classList.contains("bullet") && obj2.classList.contains("asteroid")) {
       //!BULLET X ASTEROID
@@ -385,7 +405,7 @@ function explodeAirplane() {
           endGame();
           return;
         }
-        //? WAAT THE HECK IS THIS
+        //? I FORGOT WHY I DID THIS, BUT IT WORKS
         airplane.style.transform = `translate(${innerWidth}px, ${innerHeight * 2}px)`;
         setAirplaneModel();
       }, 700);
@@ -394,8 +414,9 @@ function explodeAirplane() {
 }
 function spinCoin(coin) {
   let index = 0;
+  const lenght = coinSpin.length;
   let spinCoinId = setInterval(() => {
-    if (index > coinSpin.length - 1) {
+    if (index > lenght - 1) {
       index = 0;
     }
     coin.src = coinSpin[index++];
@@ -420,6 +441,38 @@ function explodeAsteroid(asteroid) {
       img.remove();
     }
   }, 50);
+}
+function explodeRocket(rocket) {
+  const rect = rocket.getBoundingClientRect();
+  const img = document.createElement("img");
+  img.classList = "rocket-explosion";
+  img.style.transform = `translate(calc(${rect.x + rect.width / 2}px - 50%), ${rect.y + 10}px)`;
+  rocketsCollector.appendChild(img);
+  let index = 0;
+  const length = flamesGallery.length;
+  let rocketExplodeId = setInterval(() => {
+    if (index < length) {
+      img.src = rocketExplosion[index++];
+    } else {
+      clearInterval(rocketExplodeId);
+      console.log("rocketExplodeId() oprit");
+      img.remove();
+    }
+  }, 50);
+}
+function animateRocketFlames(image) {
+  let index = 0;
+  const length = flamesGallery.length;
+  let rocketFlamesId = setInterval(() => {
+    if (index > length - 1) {
+      index = 0;
+    }
+    image.src = flamesGallery[index++];
+    if (image.getBoundingClientRect().y === 0) {
+      clearInterval(rocketFlamesId);
+      // console.log("rocketFlamesId() oprit");
+    }
+  }, 20);
 }
 
 //* --- END GAME ---
@@ -471,21 +524,19 @@ function displayEndContextMenu() {
 function clearScreen(bullet) {
   const asteroidsLeft = asteroidsCollector.querySelectorAll("img");
   const powersLeft = powerUpsCollector.querySelectorAll("img");
-  const rocketsLeft = rocketsCollector.querySelectorAll("img");
+  const rocketsLeft = rocketsCollector.querySelectorAll(".rocket-wrapper");
   const coinsLeft = coinsCollector.querySelectorAll("img");
   if (bullet === null) {
+    //* Clear entire screen
     if (asteroidsLeft.length) asteroidsLeft.forEach((asteroid) => asteroid.remove());
     if (powersLeft.length) powersLeft.forEach((powerup) => powerup.remove());
     if (rocketsLeft.length) rocketsLeft.forEach((rocket) => rocket.remove());
     if (coinsLeft.length) coinsLeft.forEach((coin) => coin.remove());
-  } else if (bullet.classList.contains("rocket")) {
-    //? DON'T DESTROY ABILITIES
-    if (asteroidsLeft.length) asteroidsLeft.forEach((asteroid) => asteroid.remove());
-    if (rocketsLeft.length)
-      rocketsLeft.forEach((rocket) => {
-        if (rocket.classList.contains("rocket")) {
-          rocket.remove();
-        }
+  } else if (bullet.classList.contains("rocket-wrapper")) {
+    if (asteroidsLeft.length)
+      asteroidsLeft.forEach((asteroid) => {
+        incrementScore(asteroid);
+        explodeAsteroid(asteroid);
       });
   }
 }
@@ -493,10 +544,8 @@ function clearScreen(bullet) {
 function handleScore() {
   scoreId = setInterval(() => {
     updateScoreValue();
-    // console.log("updating Score");
   }, 666);
 }
-
 function updateScoreValue() {
   if (indexScore < 0) {
     indexScore = 0;
@@ -517,6 +566,7 @@ function updateScoreValue() {
   indexScore++;
 }
 //! ENERGY BAR
+
 function useEnergy() {
   const bars = document.querySelectorAll("#energyPanel .energyBars .fill-percent");
   bars.forEach((bar) => {
@@ -529,14 +579,23 @@ function useEnergy() {
     } else {
       expireEnergy();
     }
+    if (newTranslateX >= -70 && !warningBar) {
+      warningBar = true;
+      energyWarningEffect().play();
+      console.log("warningBar true");
+    } else if (newTranslateX <= -120) {
+      warningBar = false;
+      console.log("warningBar false");
+    }
   });
 }
 function expireEnergy() {
   expired = true;
+  energyExpireEffect().play();
   setTimeout(() => {
     reloadEnergy();
     expired = false;
-  }, 3500);
+  }, 4500);
 }
 function reloadEnergy() {
   if (reloadInterval !== null) clearInterval(reloadInterval);
@@ -545,7 +604,7 @@ function reloadEnergy() {
     bars.forEach((bar) => {
       const style = window.getComputedStyle(bar);
       const translateX = Number(style.transform.split(", ")[4]);
-      let newTranslateX = translateX - (!expired ? 1 : 2);
+      let newTranslateX = translateX - (!expired ? 1 : 1.4);
       if (newTranslateX >= -bar.getBoundingClientRect().width - 2) {
         bar.style.transform = `translateX(${newTranslateX}px)`;
       } else {
@@ -633,8 +692,67 @@ const asteroidsGallery = [
   "./assets/asteroids/big/big2.png",
   "./assets/asteroids/big/big3.png",
   "./assets/asteroids/big/big4.png",
+  "./assets/asteroids/big/big5.png",
+  "./assets/asteroids/big/big6.png",
+  "./assets/asteroids/big/big7.png",
+  "./assets/asteroids/big/big8.png",
   "./assets/asteroids/medium/medium1.png",
   "./assets/asteroids/medium/medium2.png",
+  "./assets/asteroids/medium/medium3.png",
+  "./assets/asteroids/medium/medium4.png",
   "./assets/asteroids/small/small1.png",
   "./assets/asteroids/small/small2.png",
+  "./assets/asteroids/small/small3.png",
+  "./assets/asteroids/small/small4.png",
+];
+const rocketExplosion = [
+  "./assets/explosion/rocket/expl_10_0000.png",
+  "./assets/explosion/rocket/expl_10_0002.png",
+  "./assets/explosion/rocket/expl_10_0003.png",
+  "./assets/explosion/rocket/expl_10_0004.png",
+  "./assets/explosion/rocket/expl_10_0005.png",
+  "./assets/explosion/rocket/expl_10_0006.png",
+  "./assets/explosion/rocket/expl_10_0007.png",
+  "./assets/explosion/rocket/expl_10_0008.png",
+  "./assets/explosion/rocket/expl_10_0009.png",
+  "./assets/explosion/rocket/expl_10_0010.png",
+  "./assets/explosion/rocket/expl_10_0011.png",
+  "./assets/explosion/rocket/expl_10_0012.png",
+  "./assets/explosion/rocket/expl_10_0013.png",
+  "./assets/explosion/rocket/expl_10_0014.png",
+  "./assets/explosion/rocket/expl_10_0015.png",
+  "./assets/explosion/rocket/expl_10_0016.png",
+  "./assets/explosion/rocket/expl_10_0017.png",
+  "./assets/explosion/rocket/expl_10_0018.png",
+  "./assets/explosion/rocket/expl_10_0019.png",
+  "./assets/explosion/rocket/expl_10_0020.png",
+  "./assets/explosion/rocket/expl_10_0021.png",
+  "./assets/explosion/rocket/expl_10_0022.png",
+  "./assets/explosion/rocket/expl_10_0023.png",
+  "./assets/explosion/rocket/expl_10_0024.png",
+  "./assets/explosion/rocket/expl_10_0025.png",
+  "./assets/explosion/rocket/expl_10_0026.png",
+  "./assets/explosion/rocket/expl_10_0027.png",
+  "./assets/explosion/rocket/expl_10_0028.png",
+  "./assets/explosion/rocket/expl_10_0029.png",
+  "./assets/explosion/rocket/expl_10_0030.png",
+  "./assets/explosion/rocket/expl_10_0031.png",
+];
+const flamesGallery = [
+  "./assets/rocket/rocket_flame/rocket_1_0000.png",
+  "./assets/rocket/rocket_flame/rocket_1_0001.png",
+  "./assets/rocket/rocket_flame/rocket_1_0002.png",
+  "./assets/rocket/rocket_flame/rocket_1_0003.png",
+  "./assets/rocket/rocket_flame/rocket_1_0004.png",
+  "./assets/rocket/rocket_flame/rocket_1_0005.png",
+  "./assets/rocket/rocket_flame/rocket_1_0006.png",
+  "./assets/rocket/rocket_flame/rocket_1_0007.png",
+  "./assets/rocket/rocket_flame/rocket_1_0008.png",
+  "./assets/rocket/rocket_flame/rocket_1_0009.png",
+  "./assets/rocket/rocket_flame/rocket_1_0010.png",
+  "./assets/rocket/rocket_flame/rocket_1_0011.png",
+  "./assets/rocket/rocket_flame/rocket_1_0012.png",
+  "./assets/rocket/rocket_flame/rocket_1_0013.png",
+  "./assets/rocket/rocket_flame/rocket_1_0014.png",
+  "./assets/rocket/rocket_flame/rocket_1_0015.png",
 ];

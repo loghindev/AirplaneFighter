@@ -30,6 +30,7 @@
   background-color: transparent;
   color: white;
   transition: all 0.15s ease;
+  cursor: pointer;
 }
 #menu .content .buttons button:hover {
   background-color: white;
