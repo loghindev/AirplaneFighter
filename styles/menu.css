@@ -41,7 +41,9 @@
   position: absolute;
   top: 0;
   left: 0;
-  background-color: hsla(225, 26%, 35%, 0.247);
+  background-color: hsla(240, 21%, 28%, 0.281);
+  box-shadow: 1px 0 70px rgb(63, 68, 109);
+  backdrop-filter: blur(4px);
   width: 500px;
   height: 100%; /* parent - #menu */
   transform: translateX(calc(-100% + 70px));
@@ -59,35 +61,51 @@
   width: calc(100% - 70px);
   height: 100%; /* parent - #inventory */
   font-size: 1.1em;
-  border: 1px solid rgb(102, 202, 102);
   position: relative;
 }
 #inventory > .content > *:not(:first-child) {
-  margin-bottom: 3em;
+  margin-bottom: 5em;
 }
 #inventory .inventory-ships .gallery img:not(:first-of-type),
 #inventory .inventory-backgrounds .gallery img:not(:first-of-type) {
   display: none;
+}
+#inventory .gallery img {
+  object-fit: cover;
+  aspect-ratio: 4 / 3;
+  border-radius: 40%;
 }
 #inventory .inventory-ships,
 #inventory .inventory-backgrounds {
   display: flex;
   flex-direction: column;
   align-items: center;
-  row-gap: 0.5em;
+  row-gap: 1em;
 }
 #inventory .inventory-ships .gallery,
 #inventory .inventory-backgrounds .gallery {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  column-gap: 0.5em;
+  column-gap: 1em;
+  width: 90%;
+  height: 100px;
 }
-
+#inventory .images {
+  border-radius: 18px;
+}
 #inventory button {
   background-color: transparent;
   color: white;
-  border: 1px solid white;
-  padding: 4px 12px;
+  border: none;
+  transition: filter 0.15s ease;
+  cursor: pointer;
+}
+#inventory button:hover {
+  filter: drop-shadow(0 0 8px hsl(229, 24%, 58%));
+}
+#inventory button:active {
+  transform: translate(1px, 1px) scale(0.95);
 }
 #inventory .stats {
   padding-left: 1.5em;

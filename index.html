@@ -10,6 +10,10 @@
     <link rel="stylesheet" type="text/css" href="./styles/endMenu.css" />
   </head>
   <body>
+    <canvas id="gameCanvas">
+      <img id="bgImage" />
+    </canvas>
+
     <section id="menu">
       <div class="content">
         <h1 id="title">Airplane Fighter</h1>
@@ -24,29 +28,28 @@
           <div class="inventory-ships">
             <p class="desc">Ships</p>
             <div class="gallery">
-              <button class="prev">Prev</button>
+              <button class="prev">
+                <img src="./assets/icons/backward.png" alt="prev_icon" />
+              </button>
               <div class="images">
-                <img src="https://placehold.co/250x180?text=1" alt="" />
-                <img src="https://placehold.co/250x180?text=2" alt="" />
-                <img src="https://placehold.co/250x180?text=3" alt="" />
-                <img src="https://placehold.co/250x180?text=4" alt="" />
-                <img src="https://placehold.co/250x180?text=5" alt="" />
+                <!-- load ships -->
               </div>
-              <button class="next">Next</button>
+              <button class="next">
+                <img src="./assets/icons/forward.png" alt="next_icon" />
+              </button>
             </div>
           </div>
           <div class="inventory-backgrounds">
-            <p class="desc">Backgrounds</p>
             <div class="gallery">
-              <button class="prev">Prev</button>
+              <button class="prev">
+                <img src="./assets/icons/backward.png" alt="prev_icon" />
+              </button>
               <div class="images">
-                <img src="https://placehold.co/250x180?text=1" alt="" />
-                <img src="https://placehold.co/250x180?text=2" alt="" />
-                <img src="https://placehold.co/250x180?text=3" alt="" />
-                <img src="https://placehold.co/250x180?text=4" alt="" />
-                <img src="https://placehold.co/250x180?text=5" alt="" />
+                <!-- load backgrounds -->
               </div>
-              <button class="next">Next</button>
+              <button class="next">
+                <img src="./assets/icons/forward.png" alt="next_icon" />
+              </button>
             </div>
           </div>
           <div class="stats">
@@ -56,7 +59,6 @@
         </div>
       </div>
     </section>
-
     <section id="game" class="hidden-section">
       <img src="" id="airplane" alt="airplane" />
       <div id="garbageCollector">
@@ -119,7 +121,6 @@
         </div>
       </div>
     </section>
-
     <section id="pauseMenu" class="hidden-section">
       <div class="content">
         <p class="header">Pause</p>
@@ -143,6 +144,7 @@
       </div>
     </section>
 
-    <script src="./script.js"></script>
+    <script type="module" src="./script.js"></script>
+    <script type="module" src="./scripts.js/inventory.js"></script>
   </body>
 </html>

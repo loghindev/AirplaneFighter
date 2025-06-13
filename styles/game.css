@@ -12,10 +12,9 @@
   position: absolute;
   will-change: transform;
 }
-
 #game #airplane {
   transform: translate(-10000px, -10000px);
-  z-index: 99;
+  z-index: 2;
 }
 
 /* --- HUD (bottom-left) --- */
@@ -23,8 +22,11 @@
   position: absolute;
   bottom: 0;
   left: 0;
+  width: 330px;
+  max-width: 330px;
   font-size: 1.25em;
-  padding: 0.6em 2em 0.35em 1em;
+  z-index: 2;
+  padding: 0.5em 2em 0.3em 1em;
   backdrop-filter: blur(2px);
   background-color: var(--hud-background);
   border-style: solid;
@@ -57,6 +59,8 @@
   border-width: 0 5px 5px 0;
   border-radius: 0 0 3em 0;
   box-shadow: 1px 1px 15px var(--hud-shadow);
+  position: relative;
+  z-index: 3;
 }
 #energyPanel > .content {
   display: flex;
@@ -81,41 +85,36 @@
 }
 
 /* --- Fill energy bars --- */
-
 #energyPanel .energyBars .bar:nth-child(1) .fill-percent {
   height: 100%;
   width: 100%;
   background-image: linear-gradient(to right, lightblue, orange, red);
-  will-change: transform;
 }
 #energyPanel .energyBars .bar:nth-child(2) .fill-percent {
   height: 100%;
   width: 100%;
   background-image: linear-gradient(to right, lightblue, orange, red);
-  will-change: transform;
 }
 #energyPanel .energyBars .bar:nth-child(3) .fill-percent {
   height: 100%;
   width: 100%;
   background-image: linear-gradient(to right, lightblue, orange, red);
-  will-change: transform;
 }
 #energyPanel .energyBars .bar:nth-child(4) .fill-percent {
   height: 100%;
   width: 100%;
   background-image: linear-gradient(to right, lightblue, orange, red);
-  will-change: transform;
 }
 #energyPanel .energyBars .bar:nth-child(5) .fill-percent {
   height: 100%;
   width: 100%;
   background-image: linear-gradient(to right, lightblue, orange, red);
-  will-change: transform;
 }
 
 #energyPanel .energyBars .fill-percent {
   transform: translateX(-100%);
   opacity: 80%;
+  will-change: transform;
 }
 
 /* ----- Pause Context Menu ----- */
@@ -158,22 +157,20 @@
   0% {
     filter: drop-shadow(0 0 4px red);
   }
-  14.29% {
+  20% {
     filter: drop-shadow(0 0 4px orange);
   }
-  28.57% {
+  40% {
     filter: drop-shadow(0 0 4px yellow);
   }
-  42.86% {
+  60% {
     filter: drop-shadow(0 0 4px green);
   }
-  57.14% {
+  80% {
     filter: drop-shadow(0 0 4px blue);
   }
-  71.43% {
-    filter: drop-shadow(0 0 4px indigo);
-  }
-  85.71% {
-    filter: drop-shadow(0 0 4px rgb(114, 58, 114));
+
+  100% {
+    filter: drop-shadow(0 0 4px red);
   }
 }
