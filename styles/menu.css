@@ -64,8 +64,8 @@
   font-size: 1.1em;
   position: relative;
 }
-#inventory > .content > *:not(:first-child) {
-  margin-bottom: 5em;
+#inventory > .content .inventory-ships {
+  margin-bottom: 140px;
 }
 #inventory .inventory-ships .gallery img:not(:first-of-type),
 #inventory .inventory-backgrounds .gallery img:not(:first-of-type) {
@@ -74,7 +74,7 @@
 #inventory .gallery img {
   object-fit: cover;
   aspect-ratio: 4 / 3;
-  border-radius: 40%;
+  border-radius: 8px;
 }
 #inventory .inventory-ships,
 #inventory .inventory-backgrounds {
@@ -109,12 +109,11 @@
   transform: translate(1px, 1px) scale(0.95);
 }
 #inventory .stats {
-  padding-left: 1.5em;
+  position: absolute;
+  bottom: 1em;
+  left: 1em;
   font-size: 1.15em;
 }
-#inventory .coins {
-  padding-left: 1.5em;
-  display: flex;
-  align-items: center;
-  column-gap: 2px;
+#inventory .stats > p {
+  margin-bottom: 8px;
 }

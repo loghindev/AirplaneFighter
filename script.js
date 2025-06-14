@@ -1,10 +1,5 @@
 //* ----- GAME FUNCTIONALITY ------
-import {
-  launchRocketEffect,
-  rocketExplosionEffect,
-  energyWarningEffect,
-  energyExpireEffect,
-} from "./scripts.js/sounds.js";
+import { rocketEffects, energyEffects, airplaneEffects, giftEffects, asteroidEffects } from "./scripts.js/sounds.js";
 //* Sections
 const mainMenu = document.getElementById("menu");
 const gameSection = document.getElementById("game");
@@ -53,6 +48,7 @@ let paused = false; //! DE CONTINUAT
 
 document.addEventListener("DOMContentLoaded", () => {
   handleMainMenuContext();
+  handlePauseMenuContext();
   handleEndMenuContext();
 });
 function loadGame() {
@@ -62,14 +58,12 @@ function loadGame() {
     setAirplaneBehavior();
     once = false;
   }
-  setTimeout(generateAsteroids, 0); //TODO - while dev
-  // const powerDelay = Math.floor(Math.random() * 3000) + 6000;
-  // const rocketDelay = Math.floor(Math.random() * 3000) + 6000;
-  // console.log(powerDelay);
-  // console.log(rocketDelay);
+  const powerDelay = Math.floor(Math.random() * 30000) + 30000;
+  const rocketDelay = Math.floor(Math.random() * 30000) + 30000;
+  setTimeout(generateAsteroids, 2500); // 2500
+  setTimeout(generatePowerUpGifts, powerDelay);
+  setTimeout(generateRocketGifts, rocketDelay);
 
-  setTimeout(generatePowerUpGifts, 0); // powerDelay
-  setTimeout(generateRocketGifts, 0); // rocketDelay
   indexScore = 0;
   handleScore();
   document.body.style.cursor = "none";
@@ -93,7 +87,7 @@ function setAirplaneBehavior() {
 }
 function setAirplaneMovement() {
   document.addEventListener("mousemove", (event) => {
-    if (lockMovement || gameOver) return; // lockMovement is true while explosion effect
+    if (lockMovement || paused || gameOver) return; // lockMovement is true while explosion effect
     const x = event.clientX;
     const y = event.clientY;
     airplane.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 50%))`;
@@ -111,7 +105,7 @@ function setAirplaneShooting() {
     event.preventDefault();
     if (Number(hudRockets.textContent) > 0 && !paused && !lockMovement && !gameOver) {
       shootRocket(event.clientX, event.clientY);
-      launchRocketEffect().play();
+      rocketEffects().launch();
     } else {
       console.warn("NO BULLETS");
       // run error sound
@@ -119,9 +113,14 @@ function setAirplaneShooting() {
   });
 }
 function shoot(x, y) {
-  if (lockMovement || expired || gameOver) return;
+  if (lockMovement || paused || gameOver) return;
+  if (expired) {
+    airplaneEffects().noEnergy();
+    return;
+  }
   const bullet = createBullet();
   moveBullet(bullet, x, y);
+  airplaneEffects().play();
   useEnergy();
 }
 function shootRocket(x, y) {
@@ -144,7 +143,7 @@ function generateAsteroids() {
 
 //? Generate PowerUp Gifts
 function generatePowerUpGifts() {
-  const delay = Math.floor(Math.random() * 3000) + 3000;
+  const delay = Math.floor(Math.random() * 65000) + 25000;
   const powerUp = createPowerUpGift();
   const randomX = Math.random() * innerWidth;
   const y = -100;
@@ -154,7 +153,7 @@ function generatePowerUpGifts() {
 
 //? Generate Rocket Gifts
 function generateRocketGifts() {
-  const delay = Math.floor(Math.random() * 3000) + 3000;
+  const delay = Math.floor(Math.random() * 60000) + 60000;
   const rocketGift = createRocketGift();
   const randomX = Math.random() * innerWidth;
   const y = -100;
@@ -174,7 +173,7 @@ function generateCoinGifts(asteroidPointer) {
 function createBullet() {
   const bullet = document.createElement("img");
   bullet.classList = "bullet";
-  //TODO Modifica bullet in functie de powerup (fix aici)
+  //TODO Modify bullet by powerup
   bullet.src = "./assets/projectiles/red/slim.png";
   bulletsCollector.appendChild(bullet);
   return bullet;
@@ -217,7 +216,6 @@ function createRocket() {
   rocketBoom.classList = "rocket";
   rocketBoom.src = "./assets/rocket/rocket.png";
   rocketFlame.classList = "rocket-flame";
-  // ceva
   rocketWrapper.append(rocketBoom, rocketFlame);
   animateRocketFlames(rocketFlame);
   return rocketWrapper;
@@ -225,6 +223,7 @@ function createRocket() {
 
 //* --- MOVEMENT ---
 function moveBullet(bullet, x, y) {
+  if (paused) return;
   let bulletId = null;
   if (bullet.classList.contains("rocket-wrapper")) {
     y -= rocketSpeed; // 2
@@ -244,10 +243,9 @@ function moveBullet(bullet, x, y) {
       cancelAnimationFrame(bulletId);
       clearScreen(bullet);
       explodeRocket(bullet);
-      launchRocketEffect().pause();
-      rocketExplosionEffect().play();
+      rocketEffects().pause();
+      rocketEffects().explode();
       bullet.remove();
-
       console.log("bulletId() oprit");
     }
     return;
@@ -264,6 +262,7 @@ function moveBullet(bullet, x, y) {
   }
 }
 function moveAsteroid(asteroid, x, y, speedY) {
+  if (paused) return;
   let moveAsteroidId = null;
   y += speedY;
   asteroid.style.transform = `translate(${x}px, ${y}px)`;
@@ -279,6 +278,7 @@ function moveAsteroid(asteroid, x, y, speedY) {
   }
 }
 function moveGift(ability, x, y) {
+  if (paused) return;
   let giftId = null;
   y += giftSpeed; // 0.8
   ability.style.transform = `translate(${x}px, ${y}px)`;
@@ -319,17 +319,18 @@ function checkCollision(obj1, obj2) {
     } else if (obj1.id === "airplane" && obj2.classList.contains("power-gift")) {
       //!AIRPLANE X POWER UP GIFT
       obj2.remove();
+      giftEffects().play();
       incrementPower();
     } else if (obj1.id === "airplane" && obj2.classList.contains("rocket-gift")) {
       //!AIRPLANE X ROCKET GIFT
       obj2.remove();
+      giftEffects().play();
       incrementRocketStorage();
-      // console.log("airplane x rocket");
     } else if (obj1.id === "airplane" && obj2.classList.contains("coin-gift")) {
       //!AIRPLANE X COIN GIFT
       obj2.remove();
+      giftEffects().coin();
       incrementCoins();
-      // console.log("airplane x coin");
     }
   }
 }
@@ -386,6 +387,7 @@ function destroyAirplane() {
   runningEffect = true;
   lockMovement = true;
   explodeAirplane(); // run effect
+  airplaneEffects().explode();
 }
 
 //* --- EFFECTS ---
@@ -403,6 +405,7 @@ function explodeAirplane() {
         lockMovement = false;
         if (Number(hudHearts.textContent) <= 0) {
           endGame();
+          displayEndContextMenu();
           return;
         }
         //? I FORGOT WHY I DID THIS, BUT IT WORKS
@@ -429,6 +432,7 @@ function explodeAsteroid(asteroid) {
   const rect = asteroid.getBoundingClientRect();
   asteroid.remove();
   let index = 0;
+  asteroidEffects().explode();
   const img = document.createElement("img");
   img.classList = "destroyed";
   img.style.transform = `translate(calc(${rect.x + rect.width / 2}px - 50%), ${rect.y + 25}px)`;
@@ -483,9 +487,7 @@ function endGame() {
   clearTimeout(generateRocketGiftId);
   clearInterval(reloadInterval);
   clearInterval(scoreId);
-  displayEndContextMenu();
   clearScreen(null);
-  // indexScore = 0;
   document.body.style.cursor = "default";
 }
 
@@ -495,7 +497,6 @@ function handleMainMenuContext() {
   playBtn.addEventListener("click", () => {
     mainMenu.classList.add("hidden-section");
     gameSection.classList.remove("hidden-section");
-
     gameOver = false;
     setTimeout(loadGame, 2);
   });
@@ -516,6 +517,35 @@ function handleEndMenuContext() {
     loadGame();
   });
 }
+function handlePauseMenuContext() {
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      paused = !paused;
+      pauseMenu.classList.toggle("hidden-section");
+      document.body.style.cursor = "default";
+      console.log(paused);
+      clearInterval(scoreId);
+      clearInterval(reloadInterval);
+      clearInterval(generateAsteroidId);
+      clearInterval(generatePowerUpGiftId);
+      clearInterval(generateRocketGiftId);
+      if (!paused) reloadAfterPause();
+    }
+  });
+  // Go To Main Menu from Pause Context Menu
+  pauseMenuBtn.addEventListener("click", () => {
+    paused = false;
+    endGame();
+    mainMenu.classList.remove("hidden-section");
+    gameSection.classList.add("hidden-section");
+    pauseMenu.classList.add("hidden-section");
+  });
+  pauseContinueBtn.addEventListener("click", () => {
+    paused = false;
+    pauseMenu.classList.add("hidden-section");
+    reloadAfterPause();
+  });
+}
 function displayEndContextMenu() {
   endMenu.classList.remove("hidden-section");
 }
@@ -523,13 +553,17 @@ function displayEndContextMenu() {
 //* UTILITY FUNCTIONS
 function clearScreen(bullet) {
   const asteroidsLeft = asteroidsCollector.querySelectorAll("img");
+  const bulletsLeft = bulletsCollector.querySelectorAll("img");
   const powersLeft = powerUpsCollector.querySelectorAll("img");
+  const rocketGiftsLeft = rocketsCollector.querySelectorAll(".rocket-gift");
   const rocketsLeft = rocketsCollector.querySelectorAll(".rocket-wrapper");
   const coinsLeft = coinsCollector.querySelectorAll("img");
   if (bullet === null) {
     //* Clear entire screen
     if (asteroidsLeft.length) asteroidsLeft.forEach((asteroid) => asteroid.remove());
+    if (bulletsLeft.length) bulletsLeft.forEach((bullet) => bullet.remove());
     if (powersLeft.length) powersLeft.forEach((powerup) => powerup.remove());
+    if (rocketGiftsLeft.length) rocketGiftsLeft.forEach((rocketGift) => rocketGift.remove());
     if (rocketsLeft.length) rocketsLeft.forEach((rocket) => rocket.remove());
     if (coinsLeft.length) coinsLeft.forEach((coin) => coin.remove());
   } else if (bullet.classList.contains("rocket-wrapper")) {
@@ -540,7 +574,57 @@ function clearScreen(bullet) {
       });
   }
 }
-
+function reloadAfterPause() {
+  paused = false;
+  const viewAsteroids = document.querySelectorAll("#garbageCollector .asteroid");
+  const viewBullets = document.querySelectorAll("#garbageCollector .bullet");
+  const viewPowerUps = document.querySelectorAll("#garbageCollector .power-gift");
+  const viewRocketGifts = document.querySelectorAll("#garbageCollector .rocket-gift");
+  const viewRockets = document.querySelectorAll("#garbageCollector .rocket-wrapper");
+  const viewCoins = document.querySelectorAll("#garbageCollector .coin-gift");
+  if (viewAsteroids.length) {
+    viewAsteroids.forEach((asteroid) => {
+      const rect = asteroid.getBoundingClientRect();
+      moveAsteroid(asteroid, rect.x, rect.y, 3.5);
+    });
+  }
+  if (viewBullets.length) {
+    viewBullets.forEach((bullet) => {
+      const rect = bullet.getBoundingClientRect();
+      moveBullet(bullet, rect.x, rect.y);
+    });
+  }
+  if (viewPowerUps.length) {
+    viewPowerUps.forEach((powerUp) => {
+      const rect = powerUp.getBoundingClientRect();
+      moveGift(powerUp, rect.x, rect.y);
+    });
+  }
+  if (viewRocketGifts.length) {
+    viewRocketGifts.forEach((rocketGift) => {
+      const rect = rocketGift.getBoundingClientRect();
+      moveGift(rocketGift, rect.x, rect.y);
+    });
+  }
+  if (viewRockets.length) {
+    viewRockets.forEach((rocket) => {
+      const rect = rocket.getBoundingClientRect();
+      moveBullet(rocket, rect.x + rect.width / 2, rect.y + rect.height / 2);
+    });
+  }
+  if (viewCoins.length) {
+    viewCoins.forEach((coin) => {
+      const rect = coin.getBoundingClientRect();
+      moveGift(coin, rect.x, rect.y);
+    });
+  }
+  // Reload generating intervals
+  reloadEnergy();
+  handleScore();
+  setTimeout(generateAsteroids, 1500);
+  setTimeout(generatePowerUpGifts, Math.floor(Math.random() * 30000) + 30000);
+  setTimeout(generateRocketGifts, Math.floor(Math.random() * 30000) + 30000);
+}
 function handleScore() {
   scoreId = setInterval(() => {
     updateScoreValue();
@@ -565,8 +649,8 @@ function updateScoreValue() {
   }
   indexScore++;
 }
-//! ENERGY BAR
 
+//* ENERGY BAR
 function useEnergy() {
   const bars = document.querySelectorAll("#energyPanel .energyBars .fill-percent");
   bars.forEach((bar) => {
@@ -581,7 +665,7 @@ function useEnergy() {
     }
     if (newTranslateX >= -70 && !warningBar) {
       warningBar = true;
-      energyWarningEffect().play();
+      energyEffects().warning();
       console.log("warningBar true");
     } else if (newTranslateX <= -120) {
       warningBar = false;
@@ -591,7 +675,7 @@ function useEnergy() {
 }
 function expireEnergy() {
   expired = true;
-  energyExpireEffect().play();
+  energyEffects().expired();
   setTimeout(() => {
     reloadEnergy();
     expired = false;

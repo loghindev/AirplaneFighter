@@ -1,4 +1,5 @@
 import { menuAirplane } from "../script.js";
+import { uiEffects } from "./sounds.js";
 
 const shipsImagesWrapper = document.querySelector("#inventory .inventory-ships .images");
 const bgImagesWrapper = document.querySelector("#inventory .inventory-backgrounds .images");
@@ -56,6 +57,7 @@ function loadShips() {
     ships[index].style.display = "block";
     const path = shipsGallery[index].slice(1);
     menuAirplane.src = path;
+    uiEffects().play();
   });
   shipsNextBtn.addEventListener("click", () => {
     ships[index++].style.display = "none";
@@ -63,6 +65,7 @@ function loadShips() {
     ships[index].style.display = "block";
     const path = shipsGallery[index].slice(1);
     menuAirplane.src = path;
+    uiEffects().play();
   });
 }
 
@@ -86,6 +89,7 @@ function loadBackgrounds() {
     const path = bgGallery[index].slice(1);
     bgImage.src = path;
     firstSession = false;
+    uiEffects().play();
   });
   bgNextBtn.addEventListener("click", () => {
     backgrounds[index++].style.display = "none";
@@ -94,6 +98,7 @@ function loadBackgrounds() {
     const path = bgGallery[index].slice(1);
     bgImage.src = path;
     firstSession = false;
+    uiEffects().play();
   });
 }
 
